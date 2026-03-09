@@ -1,67 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Image Enhancer</title>
+<title>AI 4x Image Upscaler</title>
 
 <style>
 
 body{
-margin:0;
 font-family:Arial;
 background:#0f172a;
 color:white;
 text-align:center;
 padding:20px;
+margin:0;
 }
 
 h1{
-font-size:28px;
 margin-bottom:20px;
 }
 
 .upload{
 border:2px dashed #22c55e;
-padding:35px;
+padding:30px;
 border-radius:12px;
+cursor:pointer;
 margin-bottom:20px;
-cursor:pointer;
 }
-
-button{
-padding:12px 18px;
-border:none;
-border-radius:8px;
-margin:8px;
-font-size:15px;
-cursor:pointer;
-}
-
-.ai{background:#22c55e;color:white;}
-.download{background:#3b82f6;color:white;}
 
 .container{
-max-width:420px;
+display:flex;
+flex-direction:column;
+gap:20px;
+max-width:500px;
 margin:auto;
-position:relative;
 }
 
-.container img{
-width:100%;
+.image-box{
+background:#1e293b;
+padding:10px;
 border-radius:10px;
 }
 
-.after{
-position:absolute;
-top:0;
-left:0;
-width:50%;
-overflow:hidden;
+img{
+width:100%;
+border-radius:8px;
 }
 
-.range{
-width:100%;
-margin-top:15px;
+button{
+padding:14px;
+margin:8px;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+.upscale{
+background:#22c55e;
+color:white;
+}
+
+.download{
+background:#3b82f6;
+color:white;
 }
 
 .loading{
@@ -70,43 +72,41 @@ margin-top:15px;
 }
 
 </style>
+
 </head>
 
 <body>
 
-<h1>AI Image Enhancer</h1>
+<h1>AI 4x Image Upscaler</h1>
 
 <div class="upload" id="drop">
-Tap or Drag Image
+Tap or Drag Image Here
 <input type="file" id="file" hidden>
 </div>
 
-<div class="container" id="preview" style="display:none">
+<div class="container">
 
+<div class="image-box">
+<h3>Before</h3>
 <img id="before">
+</div>
 
-<div class="after">
+<div class="image-box">
+<h3>After (4x AI)</h3>
 <img id="after">
 </div>
 
 </div>
 
-<input type="range" min="0" max="100" value="50" id="slider" class="range" style="display:none">
+<button class="upscale" onclick="upscale()">Upscale Image 4x</button>
 
-<div>
-
-<button class="ai" onclick="enhance()">AI Enhance</button>
-<button class="ai" onclick="denoise()">AI Denoise</button>
-<button class="ai" onclick="restore()">Color Restore</button>
-<button class="ai" onclick="face()">Face Enhance</button>
-
-</div>
-
-<div class="loading" id="loading">Processing AI...</div>
+<div class="loading" id="loading">Processing AI Upscale...</div>
 
 <br>
 
-<button class="download" id="download" style="display:none">Download</button>
+<button class="download" id="download" style="display:none">
+Download Upscaled Image
+</button>
 
 <script>
 
@@ -133,21 +133,16 @@ preview();
 function preview(){
 
 let url=URL.createObjectURL(file);
-
 document.getElementById("before").src=url;
 
-document.getElementById("preview").style.display="block";
-document.getElementById("slider").style.display="block";
-
 }
 
-document.getElementById("slider").oninput=function(){
+async function upscale(){
 
-document.querySelector(".after").style.width=this.value+"%";
-
+if(!file){
+alert("Upload an image first");
+return;
 }
-
-async function callAI(endpoint){
 
 document.getElementById("loading").style.display="block";
 
@@ -155,7 +150,7 @@ let form=new FormData();
 form.append("image",file);
 
 let res=await fetch(
-"https://api.deepai.org/api/"+endpoint,
+"https://api.deepai.org/api/torch-srgan",
 {
 method:"POST",
 headers:{
@@ -174,7 +169,7 @@ document.getElementById("download").onclick=function(){
 
 let a=document.createElement("a");
 a.href=data.output_url;
-a.download="enhanced.png";
+a.download="upscaled-4x.png";
 a.click();
 
 };
@@ -182,11 +177,6 @@ a.click();
 document.getElementById("loading").style.display="none";
 
 }
-
-function enhance(){ callAI("torch-srgan"); }
-function denoise(){ callAI("waifu2x"); }
-function restore(){ callAI("colorizer"); }
-function face(){ callAI("face-enhance"); }
 
 </script>
 
