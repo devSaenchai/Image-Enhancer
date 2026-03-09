@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ProAiImageEnhancer - AI Image Upscaler</title>
+<meta name="description" content="Enhance and upscale your images using AI directly in your browser with ProAiImageEnhancer. Fast, private, and free.">
+<meta name="keywords" content="AI image enhancer, upscale image, AI photo enhancer, realesrgan online">
+<meta name="author" content="saenchai">
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<header class="hero">
+
+<div class="hero-content">
+
+<h1>⚡ ProAiImageEnhancer</h1>
+
+<p>Enhance blurry images with powerful AI — directly in your browser.</p>
+
+<a href="#upload" class="cta">Enhance Image</a>
+
+</div>
+
+</header>
+
+
+<section id="upload" class="upload-section">
+
+<div class="upload-card">
+
+<h2>Upload Your Image</h2>
+
+<div id="drop-zone">
+<p>Drag & Drop Image</p>
+<span>or click to upload</span>
+</div>
+
+<input type="file" id="fileInput" hidden accept="image/*">
+
+<select id="scale">
+<option value="2">2× Upscale</option>
+<option value="4">4× Upscale</option>
+</select>
+
+<button id="enhanceBtn">Enhance Image</button>
+
+</div>
+
+</section>
+
+
+<section class="preview">
+
+<h2>Before / After</h2>
+
+<div class="slider-container">
+
+<img id="beforeImg" src="" class="before">
+<img id="afterImg" src="" class="after">
+
+<input type="range" min="0" max="100" value="50" id="slider">
+
+</div>
+
+</section>
+
+
+<footer>
+
+<p>© 2026 ProAiImageEnhancer</p>
+<p class="credit">Designed by saenchai</p>
+
+</footer>
+
+<script src="app.js"></script>
+
+</body>
+</html>
