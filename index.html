@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Image Enhancer</title>
 
+<script src="https://cdn.jsdelivr.net/npm/upscaler/dist/browser/umd/upscaler.min.js"></script>
+
 <style>
 
 body{
@@ -17,7 +19,7 @@ margin:0;
 }
 
 h1{
-font-size:30px;
+font-size:28px;
 }
 
 .upload{
@@ -66,7 +68,7 @@ background:#3b82f6;
 color:white;
 }
 
-canvas{
+.loading{
 display:none;
 }
 
@@ -91,13 +93,15 @@ Tap to Upload Image
 </div>
 
 <div class="image-box">
-<h3>After (Enhanced)</h3>
+<h3>After (AI Upscaled)</h3>
 <img id="after">
 </div>
 
 </div>
 
-<button class="enhance" onclick="enhance()">Enhance Image 4x</button>
+<button class="enhance" onclick="enhance()">Enhance Image</button>
+
+<div class="loading" id="loading">Running AI Model...</div>
 
 <br>
 
@@ -105,11 +109,9 @@ Tap to Upload Image
 Download Enhanced Image
 </button>
 
-<canvas id="canvas"></canvas>
-
 <script>
 
-let imageFile;
+let imgElement;
 
 const uploadBox=document.getElementById("uploadBox");
 const fileInput=document.getElementById("fileInput");
@@ -117,54 +119,43 @@ const fileInput=document.getElementById("fileInput");
 uploadBox.onclick=()=>fileInput.click();
 
 fileInput.onchange=(e)=>{
-imageFile=e.target.files[0];
-preview();
-};
 
-function preview(){
+const file=e.target.files[0];
 
-let url=URL.createObjectURL(imageFile);
+let url=URL.createObjectURL(file);
+
+imgElement=new Image();
+imgElement.src=url;
+
 document.getElementById("before").src=url;
 
-}
+};
 
-function enhance(){
+async function enhance(){
 
-if(!imageFile){
+if(!imgElement){
 alert("Upload an image first");
 return;
 }
 
-let img=new Image();
-img.src=document.getElementById("before").src;
+document.getElementById("loading").style.display="block";
 
-img.onload=function(){
+const upscaler=new Upscaler();
 
-let canvas=document.getElementById("canvas");
-let ctx=canvas.getContext("2d");
+const result=await upscaler.upscale(imgElement);
 
-canvas.width=img.width*2;
-canvas.height=img.height*2;
+document.getElementById("after").src=result;
 
-ctx.imageSmoothingEnabled=true;
-ctx.imageSmoothingQuality="high";
-
-ctx.drawImage(img,0,0,canvas.width,canvas.height);
-
-let enhanced=canvas.toDataURL("image/png");
-
-document.getElementById("after").src=enhanced;
+document.getElementById("loading").style.display="none";
 
 document.getElementById("downloadBtn").style.display="inline-block";
 
 document.getElementById("downloadBtn").onclick=function(){
 
 let a=document.createElement("a");
-a.href=enhanced;
+a.href=result;
 a.download="enhanced-image.png";
 a.click();
-
-};
 
 };
 
