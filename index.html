@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Image Enhancer</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
-
 <style>
 
 body{
@@ -19,7 +17,6 @@ margin:0;
 }
 
 h1{
-font-size:30px;
 margin-bottom:20px;
 }
 
@@ -90,13 +87,13 @@ Tap to Upload Image
 </div>
 
 <div class="image-box">
-<h3>After (AI Enhanced)</h3>
+<h3>After (4x Upscaled)</h3>
 <canvas id="canvas"></canvas>
 </div>
 
 </div>
 
-<button class="enhance" onclick="enhance()">Run AI Enhance</button>
+<button class="enhance" onclick="enhance()">Enhance Image</button>
 
 <br>
 
@@ -105,21 +102,25 @@ Tap to Upload Image
 <script>
 
 let img = new Image()
-let canvas = document.getElementById("canvas")
-let ctx = canvas.getContext("2d")
 
-const fileInput=document.getElementById("fileInput")
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
 
-fileInput.onchange = e => {
+const before = document.getElementById("before")
+const fileInput = document.getElementById("fileInput")
 
-let file = e.target.files[0]
+fileInput.onchange = function(e){
 
-let reader = new FileReader()
+const file = e.target.files[0]
+
+if(!file) return
+
+const reader = new FileReader()
 
 reader.onload = function(event){
 
 img.src = event.target.result
-document.getElementById("before").src = img.src
+before.src = img.src
 
 }
 
@@ -127,46 +128,35 @@ reader.readAsDataURL(file)
 
 }
 
-async function enhance(){
+function enhance(){
 
 if(!img.src){
 alert("Upload image first")
 return
 }
 
-canvas.width = img.width * 4
-canvas.height = img.height * 4
+const scale = 4
+
+canvas.width = img.width * scale
+canvas.height = img.height * scale
+
+ctx.imageSmoothingEnabled = true
+ctx.imageSmoothingQuality = "high"
+
+ctx.clearRect(0,0,canvas.width,canvas.height)
 
 ctx.drawImage(img,0,0,canvas.width,canvas.height)
-
-let tensor = tf.browser.fromPixels(canvas)
-tensor = tf.image.resizeBilinear(tensor,[canvas.height,canvas.width])
-
-tensor = tensor.div(255)
-
-let sharpenKernel = tf.tensor4d([
-
-0,-1,0,
--1,5,-1,
-0,-1,0
-
-],[3,3,1,1])
-
-let expanded = tensor.expandDims(0)
-
-let enhanced = tf.conv2d(expanded,sharpenKernel,1,'same')
-
-enhanced = enhanced.squeeze().mul(255).clipByValue(0,255)
-
-await tf.browser.toPixels(enhanced,canvas)
 
 }
 
 function download(){
 
-let link=document.createElement("a")
-link.download="ai-enhanced.png"
-link.href=canvas.toDataURL()
+const link = document.createElement("a")
+
+link.download = "enhanced-image.png"
+
+link.href = canvas.toDataURL("image/png")
+
 link.click()
 
 }
