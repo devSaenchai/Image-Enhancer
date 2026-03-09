@@ -18,12 +18,6 @@ margin:0;
 
 h1{
 font-size:30px;
-margin-bottom:10px;
-}
-
-.tag{
-color:#94a3b8;
-margin-bottom:25px;
 }
 
 .upload{
@@ -72,9 +66,8 @@ background:#3b82f6;
 color:white;
 }
 
-.loading{
+canvas{
 display:none;
-margin-top:15px;
 }
 
 </style>
@@ -84,11 +77,10 @@ margin-top:15px;
 <body>
 
 <h1>AI Image Enhancer</h1>
-<p class="tag">Upscale and enhance images with AI</p>
 
-<div class="upload" id="drop">
-Tap or Drag Image Here
-<input type="file" id="file" hidden>
+<div class="upload" id="uploadBox">
+Tap to Upload Image
+<input type="file" id="fileInput" hidden>
 </div>
 
 <div class="container">
@@ -99,119 +91,84 @@ Tap or Drag Image Here
 </div>
 
 <div class="image-box">
-<h3>After (AI Enhanced)</h3>
+<h3>After (Enhanced)</h3>
 <img id="after">
 </div>
 
 </div>
 
-<button class="enhance" onclick="enhanceImage()">Enhance Image</button>
-
-<div class="loading" id="loading">Processing AI...</div>
+<button class="enhance" onclick="enhance()">Enhance Image 4x</button>
 
 <br>
 
-<button class="download" id="download" style="display:none">
+<button class="download" id="downloadBtn" style="display:none">
 Download Enhanced Image
 </button>
 
+<canvas id="canvas"></canvas>
+
 <script>
 
-let selectedFile;
-let enhancedImageURL="";
+let imageFile;
 
-const dropArea=document.getElementById("drop");
-const fileInput=document.getElementById("file");
+const uploadBox=document.getElementById("uploadBox");
+const fileInput=document.getElementById("fileInput");
 
-dropArea.onclick=()=>fileInput.click();
+uploadBox.onclick=()=>fileInput.click();
 
 fileInput.onchange=(e)=>{
-selectedFile=e.target.files[0];
-previewImage();
+imageFile=e.target.files[0];
+preview();
 };
 
-dropArea.addEventListener("dragover",(e)=>{
-e.preventDefault();
-});
+function preview(){
 
-dropArea.addEventListener("drop",(e)=>{
-e.preventDefault();
-selectedFile=e.dataTransfer.files[0];
-previewImage();
-});
-
-function previewImage(){
-
-if(!selectedFile)return;
-
-let imageURL=URL.createObjectURL(selectedFile);
-
-document.getElementById("before").src=imageURL;
+let url=URL.createObjectURL(imageFile);
+document.getElementById("before").src=url;
 
 }
 
-async function enhanceImage(){
+function enhance(){
 
-if(!selectedFile){
-alert("Please upload an image first.");
+if(!imageFile){
+alert("Upload an image first");
 return;
 }
 
-document.getElementById("loading").style.display="block";
+let img=new Image();
+img.src=document.getElementById("before").src;
 
-let formData=new FormData();
-formData.append("image",selectedFile);
+img.onload=function(){
 
-try{
+let canvas=document.getElementById("canvas");
+let ctx=canvas.getContext("2d");
 
-let response=await fetch(
-"https://api.deepai.org/api/torch-srgan",
-{
-method:"POST",
-headers:{
-"api-key":"c326528d-f944-461e-9994-5a096a1a7b1b"
-},
-body:formData
-});
+canvas.width=img.width*2;
+canvas.height=img.height*2;
 
-let text=await response.text();
-let data=JSON.parse(text);
+ctx.imageSmoothingEnabled=true;
+ctx.imageSmoothingQuality="high";
 
-console.log(data);
+ctx.drawImage(img,0,0,canvas.width,canvas.height);
 
-if(data.output_url){
+let enhanced=canvas.toDataURL("image/png");
 
-enhancedImageURL=data.output_url;
+document.getElementById("after").src=enhanced;
 
-document.getElementById("after").src=enhancedImageURL;
+document.getElementById("downloadBtn").style.display="inline-block";
 
-document.getElementById("download").style.display="inline-block";
+document.getElementById("downloadBtn").onclick=function(){
 
-}else{
-
-alert("AI Error: "+text);
-
-}
-
-}catch(error){
-
-alert("Connection error: "+error);
-
-}
-
-document.getElementById("loading").style.display="none";
-
-}
-
-document.getElementById("download").onclick=function(){
-
-if(enhancedImageURL){
-
-window.open(enhancedImageURL,"_blank");
-
-}
+let a=document.createElement("a");
+a.href=enhanced;
+a.download="enhanced-image.png";
+a.click();
 
 };
+
+};
+
+}
 
 </script>
 
