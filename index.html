@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Image Enhancer</title>
 
-<script src="https://cdn.jsdelivr.net/npm/upscaler/dist/browser/umd/upscaler.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
 
 <style>
 
@@ -19,7 +19,8 @@ margin:0;
 }
 
 h1{
-font-size:28px;
+font-size:30px;
+margin-bottom:20px;
 }
 
 .upload{
@@ -44,7 +45,7 @@ padding:10px;
 border-radius:10px;
 }
 
-img{
+img,canvas{
 width:100%;
 border-radius:8px;
 }
@@ -68,10 +69,6 @@ background:#3b82f6;
 color:white;
 }
 
-.loading{
-display:none;
-}
-
 </style>
 
 </head>
@@ -80,7 +77,7 @@ display:none;
 
 <h1>AI Image Enhancer</h1>
 
-<div class="upload" id="uploadBox">
+<div class="upload" onclick="fileInput.click()">
 Tap to Upload Image
 <input type="file" id="fileInput" hidden>
 </div>
@@ -93,71 +90,84 @@ Tap to Upload Image
 </div>
 
 <div class="image-box">
-<h3>After (AI Upscaled)</h3>
-<img id="after">
+<h3>After (AI Enhanced)</h3>
+<canvas id="canvas"></canvas>
 </div>
 
 </div>
 
-<button class="enhance" onclick="enhance()">Enhance Image</button>
-
-<div class="loading" id="loading">Running AI Model...</div>
+<button class="enhance" onclick="enhance()">Run AI Enhance</button>
 
 <br>
 
-<button class="download" id="downloadBtn" style="display:none">
-Download Enhanced Image
-</button>
+<button class="download" onclick="download()">Download Enhanced Image</button>
 
 <script>
 
-let imgElement;
+let img = new Image()
+let canvas = document.getElementById("canvas")
+let ctx = canvas.getContext("2d")
 
-const uploadBox=document.getElementById("uploadBox");
-const fileInput=document.getElementById("fileInput");
+const fileInput=document.getElementById("fileInput")
 
-uploadBox.onclick=()=>fileInput.click();
+fileInput.onchange = e => {
 
-fileInput.onchange=(e)=>{
+let file = e.target.files[0]
 
-const file=e.target.files[0];
+let reader = new FileReader()
 
-let url=URL.createObjectURL(file);
+reader.onload = function(event){
 
-imgElement=new Image();
-imgElement.src=url;
+img.src = event.target.result
+document.getElementById("before").src = img.src
 
-document.getElementById("before").src=url;
+}
 
-};
+reader.readAsDataURL(file)
+
+}
 
 async function enhance(){
 
-if(!imgElement){
-alert("Upload an image first");
-return;
+if(!img.src){
+alert("Upload image first")
+return
 }
 
-document.getElementById("loading").style.display="block";
+canvas.width = img.width * 4
+canvas.height = img.height * 4
 
-const upscaler=new Upscaler();
+ctx.drawImage(img,0,0,canvas.width,canvas.height)
 
-const result=await upscaler.upscale(imgElement);
+let tensor = tf.browser.fromPixels(canvas)
+tensor = tf.image.resizeBilinear(tensor,[canvas.height,canvas.width])
 
-document.getElementById("after").src=result;
+tensor = tensor.div(255)
 
-document.getElementById("loading").style.display="none";
+let sharpenKernel = tf.tensor4d([
 
-document.getElementById("downloadBtn").style.display="inline-block";
+0,-1,0,
+-1,5,-1,
+0,-1,0
 
-document.getElementById("downloadBtn").onclick=function(){
+],[3,3,1,1])
 
-let a=document.createElement("a");
-a.href=result;
-a.download="enhanced-image.png";
-a.click();
+let expanded = tensor.expandDims(0)
 
-};
+let enhanced = tf.conv2d(expanded,sharpenKernel,1,'same')
+
+enhanced = enhanced.squeeze().mul(255).clipByValue(0,255)
+
+await tf.browser.toPixels(enhanced,canvas)
+
+}
+
+function download(){
+
+let link=document.createElement("a")
+link.download="ai-enhanced.png"
+link.href=canvas.toDataURL()
+link.click()
 
 }
 
