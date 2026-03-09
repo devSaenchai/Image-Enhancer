@@ -1,86 +1,194 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Image Enhancer</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
 
-<title>ProAiImageEnhancer - AI Image Upscaler</title>
-<meta name="description" content="Enhance and upscale your images using AI directly in your browser with ProAiImageEnhancer. Fast, private, and free.">
-<meta name="keywords" content="AI image enhancer, upscale image, AI photo enhancer, realesrgan online">
-<meta name="author" content="saenchai">
+body{
+margin:0;
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+padding:20px;
+}
 
-<link rel="stylesheet" href="style.css">
+h1{
+font-size:28px;
+margin-bottom:20px;
+}
 
+.upload{
+border:2px dashed #22c55e;
+padding:35px;
+border-radius:12px;
+margin-bottom:20px;
+cursor:pointer;
+}
+
+button{
+padding:12px 18px;
+border:none;
+border-radius:8px;
+margin:8px;
+font-size:15px;
+cursor:pointer;
+}
+
+.ai{background:#22c55e;color:white;}
+.download{background:#3b82f6;color:white;}
+
+.container{
+max-width:420px;
+margin:auto;
+position:relative;
+}
+
+.container img{
+width:100%;
+border-radius:10px;
+}
+
+.after{
+position:absolute;
+top:0;
+left:0;
+width:50%;
+overflow:hidden;
+}
+
+.range{
+width:100%;
+margin-top:15px;
+}
+
+.loading{
+display:none;
+margin-top:15px;
+}
+
+</style>
 </head>
 
 <body>
 
-<header class="hero">
+<h1>AI Image Enhancer</h1>
 
-<div class="hero-content">
+<div class="upload" id="drop">
+Tap or Drag Image
+<input type="file" id="file" hidden>
+</div>
 
-<h1>⚡ ProAiImageEnhancer</h1>
+<div class="container" id="preview" style="display:none">
 
-<p>Enhance blurry images with powerful AI — directly in your browser.</p>
+<img id="before">
 
-<a href="#upload" class="cta">Enhance Image</a>
+<div class="after">
+<img id="after">
+</div>
 
 </div>
 
-</header>
+<input type="range" min="0" max="100" value="50" id="slider" class="range" style="display:none">
 
+<div>
 
-<section id="upload" class="upload-section">
-
-<div class="upload-card">
-
-<h2>Upload Your Image</h2>
-
-<div id="drop-zone">
-<p>Drag & Drop Image</p>
-<span>or click to upload</span>
-</div>
-
-<input type="file" id="fileInput" hidden accept="image/*">
-
-<select id="scale">
-<option value="2">2× Upscale</option>
-<option value="4">4× Upscale</option>
-</select>
-
-<button id="enhanceBtn">Enhance Image</button>
+<button class="ai" onclick="enhance()">AI Enhance</button>
+<button class="ai" onclick="denoise()">AI Denoise</button>
+<button class="ai" onclick="restore()">Color Restore</button>
+<button class="ai" onclick="face()">Face Enhance</button>
 
 </div>
 
-</section>
+<div class="loading" id="loading">Processing AI...</div>
 
+<br>
 
-<section class="preview">
+<button class="download" id="download" style="display:none">Download</button>
 
-<h2>Before / After</h2>
+<script>
 
-<div class="slider-container">
+let file;
 
-<img id="beforeImg" src="" class="before">
-<img id="afterImg" src="" class="after">
+const drop=document.getElementById("drop");
+const input=document.getElementById("file");
 
-<input type="range" min="0" max="100" value="50" id="slider">
+drop.onclick=()=>input.click();
 
-</div>
+input.onchange=(e)=>{
+file=e.target.files[0];
+preview();
+};
 
-</section>
+drop.addEventListener("dragover",(e)=>{e.preventDefault();});
 
+drop.addEventListener("drop",(e)=>{
+e.preventDefault();
+file=e.dataTransfer.files[0];
+preview();
+});
 
-<footer>
+function preview(){
 
-<p>© 2026 ProAiImageEnhancer</p>
-<p class="credit">Designed by saenchai</p>
+let url=URL.createObjectURL(file);
 
-</footer>
+document.getElementById("before").src=url;
 
-<script src="app.js"></script>
+document.getElementById("preview").style.display="block";
+document.getElementById("slider").style.display="block";
+
+}
+
+document.getElementById("slider").oninput=function(){
+
+document.querySelector(".after").style.width=this.value+"%";
+
+}
+
+async function callAI(endpoint){
+
+document.getElementById("loading").style.display="block";
+
+let form=new FormData();
+form.append("image",file);
+
+let res=await fetch(
+"https://api.deepai.org/api/"+endpoint,
+{
+method:"POST",
+headers:{
+"api-key":"c326528d-f944-461e-9994-5a096a1a7b1b"
+},
+body:form
+});
+
+let data=await res.json();
+
+document.getElementById("after").src=data.output_url;
+
+document.getElementById("download").style.display="inline-block";
+
+document.getElementById("download").onclick=function(){
+
+let a=document.createElement("a");
+a.href=data.output_url;
+a.download="enhanced.png";
+a.click();
+
+};
+
+document.getElementById("loading").style.display="none";
+
+}
+
+function enhance(){ callAI("torch-srgan"); }
+function denoise(){ callAI("waifu2x"); }
+function restore(){ callAI("colorizer"); }
+function face(){ callAI("face-enhance"); }
+
+</script>
 
 </body>
 </html>
